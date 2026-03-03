@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Generator Analisis CP (CP→TP→ATP)</title>
+  <style>
+    :root{--green:#178a43;--green2:#0f6f34;--bg:#f6f7fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e5e7eb;--shadow:0 10px 30px rgba(2,6,23,.08)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.35}
+    header{background:linear-gradient(0deg,var(--green2),var(--green));color:#fff;padding:40px 16px 50px;text-align:center}
+    header h1{margin:0;font-size:34px}
+    header .sub{margin:8px auto 0;max-width:980px;opacity:.95}
+    header .sub2{margin:6px auto 0;max-width:980px;opacity:.88;font-size:12px}
+    .wrap{max-width:1050px;margin:-34px auto 50px;padding:0 16px}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px}
+    .autosave{display:flex;align-items:center;gap:8px;justify-content:flex-end;color:var(--muted);font-size:12px;margin:-6px 4px 10px}
+    .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:900px){.grid2{grid-template-columns:1fr}}
+    .section{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+    .sect-head{font-weight:900;color:#0b5a2b;margin:0 0 10px;font-size:13px}
+    label{display:block;font-size:12px;font-weight:900;margin:10px 0 6px;color:#111827}
+    input,select,textarea{width:100%;padding:10px 11px;border:1px solid #cbd5e1;border-radius:12px;font-size:14px;outline:none;background:#fff}
+    textarea{min-height:120px;resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color:rgba(23,138,67,.65);box-shadow:0 0 0 4px rgba(23,138,67,.14)}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:900px){.row2{grid-template-columns:1fr}}
+    .actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .btn{border:none;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;font-size:13px}
+    .btn.primary{background:var(--green);color:#fff}
+    .btn.primary:hover{background:#137a3b}
+    .btn.ghost{background:#fff;border:1px solid #0f172a1a;color:#0f172a}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .msg{margin-top:12px}
+    .warn{background:#fff7e6;border:1px solid #ffd49a;padding:10px 12px;border-radius:12px}
+    .error{background:#ffecec;border:1px solid #ffb0b0;padding:10px 12px;border-radius:12px}
+    .result{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{border:1px solid var(--line);padding:8px;vertical-align:top;font-size:13px}
+    th{background:#f8fafc;text-align:left}
+    .small{font-size:12px;color:var(--muted)}
+    .footer{margin-top:16px;text-align:center;color:var(--muted);font-size:12px}
+    .pill{display:inline-block;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#f8fafc;font-size:12px;margin-right:6px;margin-bottom:6px}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Generator Analisis CP</h1>
+  <div class="sub">Input: Mapel → Fase → Elemen → CP. Output otomatis: TP, ATP, Kelas, Semester.</div>
+  <div class="sub2">Pengembang: Solehudin — Pengawas Madrasah Kementerian Agama Kabupaten Indramayu</div>
+</header>
+
+<main class="wrap">
+  <section class="panel">
+    <div class="autosave"><span class="dot"></span> Draft tersimpan otomatis • <span id="apiStatus">Mengecek API...</span></div>
+
+    <div class="grid2">
+      <div>
+        <div class="section">
+          <div class="sect-head">📚 Input Kurikulum</div>
+
+          <label>Mata Pelajaran</label>
+          <select id="mapel"></select>
+
+          <div class="row2">
+            <div>
+              <label>Fase</label>
+              <select id="fase">
+                <option value="A">A (Kelas 1–2)</option>
+                <option value="B">B (Kelas 3–4)</option>
+                <option value="C">C (Kelas 5–6)</option>
+                <option value="D">D (Kelas 7–9)</option>
+                <option value="E">E (Kelas 10)</option>
+                <option value="F">F (Kelas 11–12)</option>
+              </select>
+            </div>
+            <div>
+              <label>Rentang Kelas (otomatis)</label>
+              <input id="rentang" disabled />
+            </div>
+          </div>
+
+          <label>Elemen</label>
+          <select id="elemen"></select>
+          <div class="small" style="margin-top:6px;">Jika elemen belum ada di daftar, pilih “(Isi manual)” lalu ketik elemen di bawah.</div>
+
+          <label>Elemen (manual, opsional)</label>
+          <input id="elemenManual" placeholder="Contoh: 1.1. Pancasila" />
+
+          <label>Capaian Pembelajaran (CP)</label>
+          <textarea id="cp" placeholder="Tempel CP di sini..."></textarea>
+
+          <div class="actions">
+            <button class="btn ghost" id="btnReset">Reset</button>
+            <button class="btn primary" id="btnGenerate">Generate Analisis CP</button>
+          </div>
+
+          <div class="msg" id="msg"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section">
+          <div class="sect-head">✅ Output</div>
+          <div class="small">Hasil muncul sebagai tabel TP dan rangkuman ATP per kelas/semester.</div>
+          <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn ghost" id="btnJson" disabled>Unduh JSON</button>
+            <button class="btn ghost" id="btnDoc" disabled>Unduh DOC</button>
+          </div>
+          <div id="meta" style="margin-top:12px;"></div>
+          <div id="quality" style="margin-top:12px;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="result">
+    <h3 style="margin:0;">Hasil</h3>
+    <div id="tableWrap"></div>
+    <div class="footer">© 2026 — Generator Analisis CP • CP→TP→ATP</div>
+  </section>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const STORAGE_KEY = "analisis_cp_draft_v1";
+  let latest = null;
+
+  const faseToRentang = {"A":"Kelas 1–2","B":"Kelas 3–4","C":"Kelas 5–6","D":"Kelas 7–9","E":"Kelas 10","F":"Kelas 11–12"};
+
+  const mapelConfig = {
+    "Pendidikan Pancasila": { elements: ["1.1. Pancasila","1.2. Bhinneka Tunggal Ika (dasar)","1.3. NKRI (dasar)","1.4. UUD 1945 (pengenalan)","(Isi manual)"] },
+    "Bahasa Indonesia": { elements: ["Menyimak","Berbicara","Membaca","Menulis","(Isi manual)"] },
+    "Matematika": { elements: ["Bilangan","Aljabar","Geometri","Pengukuran","Data & Peluang","(Isi manual)"] },
+    "IPAS": { elements: ["Makhluk hidup & lingkungan","Benda & sifatnya","Energi","Bumi & antariksa","Sosial & budaya","(Isi manual)"] },
+    "Akidah Akhlak": { elements: ["Akidah","Akhlak","Adab","(Isi manual)"] },
+    "Fikih": { elements: ["Ibadah","Muamalah","(Isi manual)"] },
+    "SKI": { elements: ["Sejarah Nabi","Khulafaur Rasyidin","Dinasti/Perkembangan Islam","(Isi manual)"] },
+    "Qur'an Hadis": { elements: ["Tilawah","Tafsir dasar","Hadis pilihan","(Isi manual)"] },
+    "Bahasa Arab": { elements: ["Istima'","Kalam","Qira'ah","Kitabah","(Isi manual)"] }
+  };
+
+  function setMsg(html, kind="") { $("msg").innerHTML = html ? `<div class="${kind}">${html}</div>` : ""; }
+  function saveDraft() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      mapel: $("mapel").value, fase: $("fase").value, elemen: $("elemen").value,
+      elemenManual: $("elemenManual").value, cp: $("cp").value
+    }));
+  }
+  function loadDraft() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const p = JSON.parse(raw);
+      if (p.mapel) $("mapel").value = p.mapel;
+      if (p.fase) $("fase").value = p.fase;
+      refreshRentang(); refreshElemen();
+      if (p.elemen) $("elemen").value = p.elemen;
+      if (p.elemenManual) $("elemenManual").value = p.elemenManual;
+      if (p.cp) $("cp").value = p.cp;
+    } catch {}
+  }
+
+  function refreshRentang(){ const f = ($("fase").value||"A").toUpperCase(); $("rentang").value = faseToRentang[f] || "-"; }
+  function refreshElemen(){ const m = $("mapel").value; const els = (mapelConfig[m]?.elements) || ["(Isi manual)"]; $("elemen").innerHTML = els.map(e=>`<option value="${e}">${e}</option>`).join(""); }
+
+  function gather() {
+    const mapel = $("mapel").value.trim();
+    const fase = ($("fase").value||"").trim().toUpperCase();
+    let elemen = $("elemen").value.trim();
+    const manual = $("elemenManual").value.trim();
+    if (!elemen || elemen === "(Isi manual)") elemen = manual;
+    const cp = $("cp").value.trim();
+    return { mapel, fase, elemen, cp };
+  }
+  function validate(p){
+    if (!p.mapel) return "Pilih mata pelajaran.";
+    if (!p.fase) return "Pilih fase.";
+    if (!p.elemen) return "Isi elemen (pilih dari dropdown atau isi manual).";
+    if (!p.cp) return "Tempel CP terlebih dahulu.";
+    return "";
+  }
+  function download(filename, blob){
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+  }
+
+  function buildDocHtml(data){
+    const md=data.metadata||{}, tp=data.tp||[], atp=data.atp||[], notes=data.catatan_kualitas||[];
+    const esc=(s)=>String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    const br=(s)=>esc(s).replaceAll("\n","<br/>");
+    let html=`
+      <h2 style="text-align:center;margin:0 0 10px;">Analisis CP (CP→TP→ATP)</h2>
+      <p><b>Mapel:</b> ${esc(md.mapel)} &nbsp; <b>Fase:</b> ${esc(md.fase)} &nbsp; <b>Rentang Kelas:</b> ${esc(md.rentang_kelas)}</p>
+      <p><b>Elemen:</b> ${esc(md.elemen)}</p>
+      <p><b>CP:</b><br/>${br(md.cp)}</p>
+      <hr/><h3>Daftar TP</h3>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <th style="border:1px solid #ccc;padding:6px;">No</th>
+          <th style="border:1px solid #ccc;padding:6px;">TP</th>
+          <th style="border:1px solid #ccc;padding:6px;">Kelas</th>
+          <th style="border:1px solid #ccc;padding:6px;">Semester</th>
+          <th style="border:1px solid #ccc;padding:6px;">Indikator</th>
+          <th style="border:1px solid #ccc;padding:6px;">Materi</th>
+          <th style="border:1px solid #ccc;padding:6px;">Asesmen</th>
+        </tr>`;
+    for (const r of tp){
+      html += `<tr>
+        <td style="border:1px solid #ccc;padding:6px;">${esc(r.no)}</td>
+        <td style="border:1px solid #ccc;padding:6px;">${br(r.rumusan_tp)}</td>
+        <td style="border:1px solid #ccc;padding:6px;">${esc(r.kelas)}</td>
+        <td style="border:1px solid #ccc;padding:6px;">${esc(r.semester)}</td>
+        <td style="border:1px solid #ccc;padding:6px;">${br(r.indikator_ringkas)}</td>
+        <td style="border:1px solid #ccc;padding:6px;">${br(r.materi_kunci||"")}</td>
+        <td style="border:1px solid #ccc;padding:6px;">${br(r.asesmen_singkat||"")}</td>
+      </tr>`;
+    }
+    html += `</table><hr/><h3>ATP</h3>`;
+    for (const a of atp){
+      html += `<p><b>${esc(a.kelas)} Semester ${esc(a.semester)}:</b> TP ${esc((a.alur_tp_no||[]).join(" → "))}</p>`;
+    }
+    if (notes.length){
+      html += `<hr/><h3>Catatan Kualitas</h3><ul>`;
+      notes.forEach(n=> html += `<li>${br(n)}</li>`);
+      html += `</ul>`;
+    }
+    return html;
+  }
+
+  function render(data){
+    latest=data;
+    $("btnJson").disabled=false;
+    $("btnDoc").disabled=false;
+
+    const md=data.metadata||{};
+    $("meta").innerHTML = `
+      <span class="pill"><b>Mapel:</b> ${md.mapel||""}</span>
+      <span class="pill"><b>Fase:</b> ${md.fase||""}</span>
+      <span class="pill"><b>Kelas:</b> ${md.rentang_kelas||""}</span>
+      <span class="pill"><b>Elemen:</b> ${md.elemen||""}</span>`;
+
+    const notes=data.catatan_kualitas||[];
+    $("quality").innerHTML = notes.length ? `<div class="warn"><b>Catatan kualitas:</b><ul style="margin:6px 0 0 18px;">${notes.map(x=>`<li>${x}</li>`).join("")}</ul></div>` : "";
+
+    const tp=data.tp||[];
+    const rows=tp.map(r=>`<tr>
+      <td>${r.no}</td><td>${r.rumusan_tp}</td><td>${r.kelas}</td><td>${r.semester}</td>
+      <td>${r.indikator_ringkas}</td><td>${r.materi_kunci||""}</td><td>${r.asesmen_singkat||""}</td>
+    </tr>`).join("");
+
+    const atp=data.atp||[];
+    const atpHtml=atp.map(a=>`<div class="small" style="margin-top:6px;"><b>${a.kelas} Semester ${a.semester}:</b> TP ${(a.alur_tp_no||[]).join(" → ")}</div>`).join("");
+
+    $("tableWrap").innerHTML = `
+      <div class="small" style="margin-top:8px;"><b>CP:</b> ${md.cp||""}</div>
+      <h4 style="margin:12px 0 6px;">TP</h4>
+      <table>
+        <thead><tr>
+          <th style="width:54px;">No</th>
+          <th>Rumusan TP</th>
+          <th style="width:90px;">Kelas</th>
+          <th style="width:90px;">Semester</th>
+          <th style="width:220px;">Indikator</th>
+          <th style="width:170px;">Materi</th>
+          <th style="width:170px;">Asesmen</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <h4 style="margin:14px 0 6px;">ATP</h4>
+      ${atpHtml || "<div class='small'>ATP belum tersedia.</div>"}`;
+  }
+
+  async function checkApi(){
+    try{
+      const r=await fetch("/api/ping");
+      const t=await r.json();
+      if (t && t.ok){
+        $("apiStatus").textContent = t.hasGeminiKey ? "API siap" : "API aktif, tapi GEMINI_API_KEY belum diset";
+        if (!t.hasGeminiKey) setMsg("Server API aktif, tapi <b>GEMINI_API_KEY</b> belum diset di Environment Variables (Vercel).", "warn");
+      } else $("apiStatus").textContent="API tidak siap";
+    } catch {
+      $("apiStatus").textContent="API tidak ditemukan (cek deploy)";
+      setMsg("API tidak bisa diakses. Hosting static/file:// tidak bisa menjalankan <b>/api</b>. Deploy di Vercel.", "error");
+    }
+  }
+
+  async function generate(){
+    setMsg("", "");
+    $("btnGenerate").disabled=true;
+    $("btnJson").disabled=true;
+    $("btnDoc").disabled=true;
+    latest=null;
+
+    const p=gather();
+    const err=validate(p);
+    if (err){ setMsg(err, "error"); $("btnGenerate").disabled=false; return; }
+
+    try{
+      const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
+      let out=null;
+      try{ out=await r.json(); }catch{
+        const t=await r.text().catch(()=> "");
+        console.error("Non-JSON:", t);
+        setMsg("API tidak mengembalikan JSON. Biasanya /api tidak aktif (404) atau deploy salah.", "error");
+        $("btnGenerate").disabled=false; return;
+      }
+      if (!r.ok || !out.ok){
+        console.error(out);
+        setMsg("Gagal generate. Pastikan GEMINI_API_KEY sudah diset. Detail error di console (F12).", "error");
+        $("btnGenerate").disabled=false; return;
+      }
+      render(out.data);
+      setMsg("<b>Selesai.</b> Silakan unduh JSON/DOC bila diperlukan.", "warn");
+    }catch(e){
+      console.error(e);
+      setMsg("Terjadi error saat memanggil server. Cek koneksi / konfigurasi deploy.", "error");
+    }finally{
+      $("btnGenerate").disabled=false;
+    }
+  }
+
+  function init(){
+    const maps=Object.keys(mapelConfig);
+    $("mapel").innerHTML = maps.map(m=>`<option value="${m}">${m}</option>`).join("");
+    refreshRentang(); refreshElemen();
+
+    $("fase").addEventListener("change", ()=>{ refreshRentang(); saveDraft(); });
+    $("mapel").addEventListener("change", ()=>{ refreshElemen(); saveDraft(); });
+    $("elemen").addEventListener("change", saveDraft);
+    $("elemenManual").addEventListener("input", saveDraft);
+    $("cp").addEventListener("input", saveDraft);
+
+    $("btnGenerate").addEventListener("click", ()=>{ saveDraft(); generate(); });
+    $("btnReset").addEventListener("click", ()=>{ localStorage.removeItem(STORAGE_KEY); location.reload(); });
+
+    $("btnJson").addEventListener("click", ()=>{ if(!latest)return; download("analisis-cp.json", new Blob([JSON.stringify(latest,null,2)],{type:"application/json"})); });
+    $("btnDoc").addEventListener("click", ()=>{ if(!latest)return; const html=buildDocHtml(latest); download("analisis-cp.doc", new Blob([`<html><head><meta charset="utf-8"></head><body>${html}</body></html>`],{type:"application/msword"})); });
+
+    loadDraft();
+    checkApi();
+  }
+  init();
+</script>
+</body>
+</html>
